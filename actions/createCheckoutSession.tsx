@@ -1,6 +1,5 @@
 "use server";
 
-
 import { BasketItem } from "@/app/(store)/store";
 import { imageUrl } from "@/lib/imageUrl";
 import stripe from "@/lib/stripe";
@@ -40,15 +39,17 @@ export async function createCheckoutSession(
     }
 
     const baseUrl =
-      process.env.NODE_ENV === "production"
+      process.env.NODE_ENV === "production" && process.env.VERCEL_URL
         ? `https://${process.env.VERCEL_URL}`
-        : `${process.env.NEXT_PUBLIC_BASE_URL}`;
+        : process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
 
     const successUrl = `${baseUrl}/success?session_id={CHECKOUT_SESSION_ID}&orderNumber=${metadata.orderNumber}`;
-
     const cancelUrl = `${baseUrl}/basket`;
 
     console.log("Base URL:", baseUrl);
+    console.log("Success URL:", successUrl);
+    console.log("Cancel URL:", cancelUrl);
+
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
       customer_creation: customerId ? undefined : "always",
@@ -56,8 +57,8 @@ export async function createCheckoutSession(
       metadata,
       allow_promotion_codes: true,
       mode: "payment",
-      success_url: `${baseUrl}/success?session_id={CHECKOUT_SESSION_ID}&orderNumber=${metadata.orderNumber}`,
-      cancel_url: `${baseUrl}/basket`,
+      success_url: successUrl,
+      cancel_url: cancelUrl,
       line_items: items.map((item) => ({
         price_data: {
           currency: "usd",
@@ -90,18 +91,18 @@ export async function createCheckoutSession(
 
 // import stripe from "@/lib/stripe";
 
-// export async function createCheckoutSession(  cartItems: any[], 
-//   userId: string, 
-//   userInfo?: { 
-//     customerName: string; 
-//     customerEmail: string; 
+// export async function createCheckoutSession(  cartItems: any[],
+//   userId: string,
+//   userInfo?: {
+//     customerName: string;
+//     customerEmail: string;
 //   })
 
 // {
 //   try {
 //     // Generate order number
 //     const orderNumber = `ORD-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-    
+
 //     const session = await stripe.checkout.sessions.create({
 //       payment_method_types: ['card'],
 //       line_items: cartItems.map(item => ({
