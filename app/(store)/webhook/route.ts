@@ -5,6 +5,13 @@ import stripe from "@/lib/stripe";
 import { backendClient } from "@/sanity/lib/backendClient";
 
 export async function POST(request: Request) {
+  const dataset = process.env.NEXT_PUBLIC_SANITY_DATASET ??
+    process.env.SANITY_DATASET ?? "production";
+  if (!dataset) {
+    // handle missing value gracefully, or return a 400/500 with a helpful message 
+    return new Response ("Missing Sanity dataset configuration", { status: 500
+                                                                 });
+  }
   console.log("🔔 Webhook endpoint called!");
 
   const body = await request.text();
